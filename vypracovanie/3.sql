@@ -15,7 +15,7 @@ WITH event_data AS (
         END AS score_margin
     FROM play_records AS pr
     JOIN players AS pl ON pl.id = pr.player1_id
-    WHERE pr.game_id = 21701185
+    WHERE pr.game_id =  {{game_id}}--21701185, 21701180
     -- AND pr.event_msg_type IN ('FIELD_GOAL_MADE', 'FREE_THROW', 'FIELD_GOAL_MISSED', 'INSTANT_REPLAY')
     ORDER BY pr.event_number ASC
 ),
