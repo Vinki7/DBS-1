@@ -1,4 +1,3 @@
--- Active: 1740996226560@@localhost@5433@nba@public
 WITH event_data AS (
     SELECT
         pr.player1_id AS player_id,
@@ -105,35 +104,54 @@ point_statistics AS (
     GROUP BY gp.player_id, gp.team_id
 )
 SELECT 
-    gp.player_id AS player_id,
-    gp.first_name AS first_name,
-    gp.last_name AS last_name,
-    ps.total_points_scored AS points,
-    ps.two_points_made AS "2PM",
-    ps.three_points_made AS "3PM",
-    sm.missed_shots AS missed_shots,
-    ROUND(
-        CASE 
-            WHEN (ps.two_points_made + ps.three_points_made + sm.missed_shots) = 0 
-                THEN CAST(0 AS DECIMAL)
-            ELSE 
-                (CAST(ps.two_points_made + ps.three_points_made AS DECIMAL) 
-                / 
-                CAST(ps.two_points_made + ps.three_points_made + sm.missed_shots AS DECIMAL)) * 100
-        END
-    , 2) AS shooting_percentage,
-    ps.free_throws_made AS "FTM",
-    sm.missed_free_throws AS missed_free_throws,
-    ROUND(
-        CASE 
-            WHEN (ps.free_throws_made + sm.missed_free_throws) = 0 
-                THEN CAST(0 AS DECIMAL)
-            ELSE 
-                (CAST(ps.free_throws_made AS DECIMAL) 
-                / 
-                CAST(ps.free_throws_made + sm.missed_free_throws AS DECIMAL)) * 100
-        END
-    , 2) AS ft_percentage
-FROM game_players as gp
-JOIN point_statistics AS ps ON ps.player_id = gp.player_id
-LEFT JOIN shots_missed AS sm ON sm.player_id = gp.player_id
+    raw_data.player_id AS player_id,
+    raw_data.first_name AS first_name,
+    raw_data.last_name AS last_name,
+    raw_data.points AS points,
+    raw_data.two_points_made AS "2PM",
+    raw_data.three_points_made AS "3PM",
+    raw_data.missed_shots AS missed_shots,
+    raw_data.shooting_percentage AS shooting_percentage,
+    raw_data.free_throws_made AS "FTM",
+    raw_data.missed_free_throws AS missed_free_throws,
+    raw_data.ft_percentage AS ft_percentage
+FROM (
+    SELECT 
+        gp.player_id AS player_id,
+        gp.first_name AS first_name,
+        gp.last_name AS last_name,
+        ps.total_points_scored AS points,
+        ps.two_points_made AS two_points_made,
+        ps.three_points_made AS three_points_made,
+        sm.missed_shots AS missed_shots,
+        ROUND(
+            CASE 
+                WHEN (ps.two_points_made + ps.three_points_made + sm.missed_shots) = 0 
+                    THEN CAST(0 AS DECIMAL)
+                ELSE 
+                    (CAST(ps.two_points_made + ps.three_points_made AS DECIMAL) 
+                    / 
+                    CAST(ps.two_points_made + ps.three_points_made + sm.missed_shots AS DECIMAL)) * 100
+            END
+        , 2) AS shooting_percentage,
+        ps.free_throws_made AS free_throws_made,
+        sm.missed_free_throws AS missed_free_throws,
+        ROUND(
+            CASE 
+                WHEN (ps.free_throws_made + sm.missed_free_throws) = 0 
+                    THEN CAST(0 AS DECIMAL)
+                ELSE 
+                    (CAST(ps.free_throws_made AS DECIMAL) 
+                    / 
+                    CAST(ps.free_throws_made + sm.missed_free_throws AS DECIMAL)) * 100
+            END
+        , 2) AS ft_percentage
+    FROM game_players as gp
+    JOIN point_statistics AS ps ON ps.player_id = gp.player_id
+    LEFT JOIN shots_missed AS sm ON sm.player_id = gp.player_id
+) AS raw_data
+ORDER BY 
+    raw_data.points DESC, 
+    raw_data.shooting_percentage DESC, 
+    raw_data.ft_percentage DESC,
+    raw_data.player_id ASC
