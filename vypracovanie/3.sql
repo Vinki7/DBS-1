@@ -59,63 +59,72 @@ shots_missed AS (
     SELECT
         ed.player_id AS player_id,
         ed.team_id AS team_id,
-        COUNT(
+        SUM(
             CASE 
-                WHEN ed.score IS NULL THEN 1 
+                WHEN (ed.event_type = 'FIELD_GOAL_MISSED' AND ed.score IS NULL) 
+                    THEN 1
+                ELSE 0
             END
         ) AS missed_shots,
         SUM(
             CASE 
-                WHEN ed.event_type = 'FREE_THROW' THEN 1
+                WHEN (ed.event_type = 'FREE_THROW' AND ed.score IS NULL) 
+                    THEN 1
                 ELSE 0
             END
         ) AS missed_free_throws
     FROM event_data AS ed
-    WHERE ed.score IS NULL
-        AND ed.event_type IN ('FIELD_GOAL_MISSED', 'FREE_THROW')
     GROUP BY ed.player_id, ed.team_id
 ),
 point_statistics AS (
     SELECT
-        ss.player_id AS player_id,
-        ss.team_id AS team_id,
-        SUM(ss.points_scored) AS total_points_scored,
+        gp.player_id AS player_id,
+        gp.team_id AS team_id,
+        COALESCE(SUM(ss.points_scored), 0) AS total_points_scored,
         SUM(
             CASE 
-                WHEN ss.points_scored = 2 THEN 1
+                WHEN ss.points_scored = 2 
+                    THEN 1
                 ELSE 0
             END
         ) AS two_points_made,
         SUM(
             CASE 
-                WHEN ss.points_scored = 3 THEN 1
+                WHEN ss.points_scored = 3 
+                    THEN 1
                 ELSE 0
             END
         ) AS three_points_made,
         SUM(
             CASE 
-                WHEN ss.points_scored = 1 THEN 1
+                WHEN ss.points_scored = 1 
+                    THEN 1
                 ELSE 0
             END
         ) AS free_throws_made
-    FROM successfull_shots AS ss
-    GROUP BY ss.player_id, ss.team_id
+    FROM game_players AS gp
+    LEFT JOIN successfull_shots AS ss ON ss.player_id = gp.player_id
+    GROUP BY gp.player_id, gp.team_id
 )
 SELECT 
-    pl.player_id AS player_id,
-    pl.first_name AS first_name,
-    pl.last_name AS last_name,
-    ps.total_points_scored AS total_points_scored,
-    ps.two_points_made AS two_points_made,
-    ps.three_points_made AS three_points_made,
+    gp.player_id AS player_id,
+    gp.first_name AS first_name,
+    gp.last_name AS last_name,
+    ps.total_points_scored AS points,
+    ps.two_points_made AS "2PM",
+    ps.three_points_made AS "3PM",
     sm.missed_shots AS missed_shots,
+    ROUND(
+        CASE 
+            WHEN (ps.two_points_made + ps.three_points_made + sm.missed_shots) = 0 
+                THEN CAST(0 AS DECIMAL)
+            ELSE 
+                (CAST(ps.two_points_made + ps.three_points_made AS DECIMAL) 
+                / 
+                CAST(ps.two_points_made + ps.three_points_made + sm.missed_shots AS DECIMAL)) * 100
+        END
+    , 2) AS shooting_percentage,
     sm.missed_free_throws AS missed_free_throws
-FROM (
-    SELECT DISTINCT 
-        ss.player_id AS player_id, 
-        ss.first_name AS first_name, 
-        ss.last_name AS last_name
-    FROM successfull_shots AS ss
-) as pl
-JOIN point_statistics AS ps ON ps.player_id = pl.player_id
-LEFT JOIN shots_missed AS sm ON sm.player_id = pl.player_id
+FROM game_players as gp
+JOIN point_statistics AS ps ON ps.player_id = gp.player_id
+LEFT JOIN shots_missed AS sm ON sm.player_id = gp.player_id
