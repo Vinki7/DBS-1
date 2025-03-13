@@ -1,6 +1,4 @@
 -- Active: 1740996226560@@localhost@5433@nba@public
--- focus on FIELD_GOAL_MADE, FREE_THROW => these generate points
-
 WITH event_data AS (
     SELECT
         pr.player1_id AS player_id,
