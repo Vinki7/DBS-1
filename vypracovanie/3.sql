@@ -148,7 +148,7 @@ FROM (
         , 2) AS ft_percentage
     FROM game_players as gp
     JOIN point_statistics AS ps ON ps.player_id = gp.player_id
-    LEFT JOIN shots_missed AS sm ON sm.player_id = gp.player_id
+    JOIN shots_missed AS sm ON sm.player_id = gp.player_id
 ) AS raw_data
 ORDER BY 
     raw_data.points DESC, 
