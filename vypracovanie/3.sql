@@ -124,7 +124,18 @@ SELECT
                 CAST(ps.two_points_made + ps.three_points_made + sm.missed_shots AS DECIMAL)) * 100
         END
     , 2) AS shooting_percentage,
-    sm.missed_free_throws AS missed_free_throws
+    ps.free_throws_made AS "FTM",
+    sm.missed_free_throws AS missed_free_throws,
+    ROUND(
+        CASE 
+            WHEN (ps.free_throws_made + sm.missed_free_throws) = 0 
+                THEN CAST(0 AS DECIMAL)
+            ELSE 
+                (CAST(ps.free_throws_made AS DECIMAL) 
+                / 
+                CAST(ps.free_throws_made + sm.missed_free_throws AS DECIMAL)) * 100
+        END
+    , 2) AS ft_percentage
 FROM game_players as gp
 JOIN point_statistics AS ps ON ps.player_id = gp.player_id
 LEFT JOIN shots_missed AS sm ON sm.player_id = gp.player_id
