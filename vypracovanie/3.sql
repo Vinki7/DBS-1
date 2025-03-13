@@ -1,0 +1,121 @@
+-- Active: 1740996226560@@localhost@5433@nba@public
+-- focus on FIELD_GOAL_MADE, FREE_THROW => these generate points
+
+WITH event_data AS (
+    SELECT
+        pr.player1_id AS player_id,
+        pl.first_name AS first_name,
+        pl.last_name AS last_name,
+        pr.game_id AS game_id,
+        pr.player1_team_id AS team_id,
+        pr.event_msg_type AS event_type,
+        pr.event_number AS event_number,
+        pr.score AS score,
+        CASE 
+            WHEN pr.score_margin <> 'TIE' THEN pr.score_margin::INTEGER 
+            WHEN pr.score_margin = 'TIE' THEN 0 
+            ELSE NULL
+        END AS score_margin
+    FROM play_records AS pr
+    JOIN players AS pl ON pl.id = pr.player1_id
+    WHERE pr.game_id = 21701185
+    -- AND pr.event_msg_type IN ('FIELD_GOAL_MADE', 'FREE_THROW', 'FIELD_GOAL_MISSED', 'INSTANT_REPLAY')
+    ORDER BY pr.event_number ASC
+),
+game_players AS (
+    SELECT DISTINCT
+        ed.player_id AS player_id,
+        ed.first_name AS first_name,
+        ed.last_name AS last_name,
+        ed.game_id AS game_id,
+        ed.team_id AS team_id
+    FROM event_data AS ed
+    ORDER BY ed.team_id
+),
+successfull_shots AS (
+    SELECT
+        ed.player_id AS player_id,
+        ed.first_name AS first_name,
+        ed.last_name AS last_name,
+        ed.game_id AS game_id,
+        ed.team_id AS team_id,
+        ed.event_type AS event_type,
+        ed.event_number AS event_number,
+        ed.score AS score,
+        ABS(
+            COALESCE(
+                LAG(ed.score_margin) 
+                OVER (
+                    ORDER BY ed.event_number ASC
+                )
+            , 0)
+            -
+            ed.score_margin
+        ) AS points_scored
+    FROM event_data AS ed
+    WHERE ed.score IS NOT NULL
+),
+shots_missed AS (
+    SELECT
+        ed.player_id AS player_id,
+        ed.team_id AS team_id,
+        COUNT(
+            CASE 
+                WHEN ed.score IS NULL THEN 1 
+            END
+        ) AS missed_shots,
+        SUM(
+            CASE 
+                WHEN ed.event_type = 'FREE_THROW' THEN 1
+                ELSE 0
+            END
+        ) AS missed_free_throws
+    FROM event_data AS ed
+    WHERE ed.score IS NULL
+        AND ed.event_type IN ('FIELD_GOAL_MISSED', 'FREE_THROW')
+    GROUP BY ed.player_id, ed.team_id
+),
+point_statistics AS (
+    SELECT
+        ss.player_id AS player_id,
+        ss.team_id AS team_id,
+        SUM(ss.points_scored) AS total_points_scored,
+        SUM(
+            CASE 
+                WHEN ss.points_scored = 2 THEN 1
+                ELSE 0
+            END
+        ) AS two_points_made,
+        SUM(
+            CASE 
+                WHEN ss.points_scored = 3 THEN 1
+                ELSE 0
+            END
+        ) AS three_points_made,
+        SUM(
+            CASE 
+                WHEN ss.points_scored = 1 THEN 1
+                ELSE 0
+            END
+        ) AS free_throws_made
+    FROM successfull_shots AS ss
+    GROUP BY ss.player_id, ss.team_id
+)
+SELECT 
+    pl.player_id AS player_id,
+    pl.first_name AS first_name,
+    pl.last_name AS last_name,
+    ps.total_points_scored AS total_points_scored,
+    ps.two_points_made AS two_points_made,
+    ps.three_points_made AS three_points_made,
+    sm.missed_shots AS missed_shots,
+    sm.missed_free_throws AS missed_free_throws
+FROM (
+    SELECT DISTINCT 
+        ss.player_id AS player_id, 
+        ss.first_name AS first_name, 
+        ss.last_name AS last_name
+    FROM successfull_shots AS ss
+) as pl
+JOIN point_statistics AS ps ON ps.player_id = pl.player_id
+LEFT JOIN shots_missed AS sm ON sm.player_id = pl.player_id
