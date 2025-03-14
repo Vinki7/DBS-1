@@ -154,4 +154,4 @@ ORDER BY
     raw_data.points DESC, 
     raw_data.shooting_percentage DESC, 
     raw_data.ft_percentage DESC,
-    raw_data.player_id ASC
+    raw_data.player_id ASC;

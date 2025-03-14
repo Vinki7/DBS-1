@@ -23,7 +23,6 @@ order:
 
 WITH selected_records as (
     SELECT
-        pl.id AS player_id,
         pr.player1_id AS player1_id,
         pr.player2_id AS player2_id,
         pr.event_number AS event_number,
@@ -32,29 +31,27 @@ WITH selected_records as (
         pr.game_id AS game_id
     FROM play_records AS pr
     JOIN games ON games.id = pr.game_id
-    JOIN players AS pl ON pl.id = (
-        CASE 
-            WHEN pl.id = pr.player1_id 
-                THEN pr.player1_id 
-            WHEN pl.id = pr.player2_id 
-                THEN pr.player2_id  
-        END
-    )
     WHERE 
         games.season_id = '22018'--{{season_id}}
         AND
         pr.event_msg_type IN ('FIELD_GOAL_MADE', 'FREE_THROW', 'REBOUND')
-    ORDER BY pr.game_id ASC, player_id ASC
+    ORDER BY pr.game_id ASC, pr.player1_id ASC, pr.player2_id ASC
 )
 SELECT
-    sr.player_id AS player_id,
+    pl.id AS player_id,
     sr.game_id AS game_id,
     COUNT(
         CASE 
-            WHEN (sr.event_type = 'FIELD_GOAL_MADE' AND sr.player_id = sr.player1_id) 
+            WHEN (sr.event_type = 'FIELD_GOAL_MADE' AND pl.id = sr.player1_id) 
                 THEN 1
         END
     ) AS field_goals_made,
+    COUNT(
+        CASE
+            WHEN (sr.event_type = 'FIELD_GOAL_MADE' AND pl.id = sr.player2_id)
+                THEN 1
+        END
+    ) AS assists_made,
     COUNT(
         CASE 
             WHEN (sr.event_type = 'FREE_THROW' AND sr.score IS NOT NULL) 
@@ -66,6 +63,14 @@ SELECT
             WHEN (sr.event_type = 'REBOUND')
                 THEN 1
         END
-    ) AS reboundS_made
+    ) AS rebounds_made
 FROM selected_records AS sr
-GROUP BY sr.game_id, sr.player_id;
+JOIN players AS pl ON pl.id = (
+        CASE 
+            WHEN pl.id = sr.player1_id 
+                THEN sr.player1_id 
+            WHEN pl.id = sr.player2_id 
+                THEN sr.player2_id  
+        END
+    )
+GROUP BY sr.game_id, pl.id;
