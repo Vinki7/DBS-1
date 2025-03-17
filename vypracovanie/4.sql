@@ -1,4 +1,3 @@
--- Active: 1740996226560@@localhost@5433@nba@public
 WITH selected_records as (
     SELECT
         pl.id AS player_id,
@@ -105,49 +104,3 @@ FROM (
 )
 GROUP BY player_id
 ORDER BY longest_streak DESC, player_id ASC;
-,
--- streaks AS (
---     SELECT
---         pl.player_id,
---         td.game_id,
---         td.is_triple_double,
---         CASE 
---             WHEN td.is_triple_double = 1 
---             AND LAG(td.is_triple_double, 1, 0) OVER (PARTITION BY pl.player_id ORDER BY td.game_id) = 0
---                 THEN 1
---             ELSE 0  
---             END AS streak_start
---     FROM (
---         SELECT DISTINCT player_id
---         FROM is_td
---         GROUP BY game_id, player_id
---         HAVING SUM(is_triple_double) > 0
---         ORDER BY player_id ASC
---     ) AS pl
---     JOIN is_td AS td ON td.player_id = pl.player_id
--- ),
--- grouped_streaks AS (
---     SELECT
---         player_id,
---         game_id,
---         is_triple_double,
---         streak_start,
---         SUM(streak_start) OVER (PARTITION BY player_id ORDER BY game_id) AS streak_group
---     FROM streaks
--- )
--- SELECT
---     player_id,
---     MAX(longest_streak) AS longest_streak
--- FROM (
---     SELECT
---         player_id,
---         streak_group,
---         COUNT(*) AS longest_streak
---     FROM grouped_streaks
---     WHERE is_triple_double = 1
---     GROUP BY player_id, streak_group
---     ORDER BY player_id DESC, streak_group ASC
--- )
--- GROUP BY player_id
--- ORDER BY longest_streak DESC, player_id ASC
-
