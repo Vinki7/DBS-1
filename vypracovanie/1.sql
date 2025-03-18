@@ -1,5 +1,3 @@
--- Active: 1740996226560@@localhost@5433@nba@public
-
 WITH p_selection AS (
     SELECT 
         pr1.player1_id AS player_id,
@@ -10,7 +8,7 @@ WITH p_selection AS (
             ON pr1.game_id = pr2.game_id
             AND pr1.player1_id = pr2.player1_id
             AND pr2.event_number = pr1.event_number + 1
-    WHERE pr1.game_id = {{game_id}} AND pr1.event_msg_type = 'REBOUND' AND pr2.event_msg_type = 'FIELD_GOAL_MADE'
+    WHERE pr1.game_id = {{game_id}} AND pr1.event_msg_type = 'REBOUND' AND pr2.event_msg_type = 'FIELD_GOAL_MADE'--22000516, 22000520, 22000521, 22000529
 )
 SELECT 
     p_selection.player_id, 

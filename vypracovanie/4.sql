@@ -11,7 +11,7 @@ WITH selected_records as (
     JOIN play_records AS pr ON pl.id = pr.player1_id OR pl.id = pr.player2_id
     JOIN games ON games.id = pr.game_id
     WHERE 
-        games.season_id = '22018'--{{season_id}}
+        games.season_id = '{{season_id}}'--'22018'
         AND
         pr.event_msg_type IN ('FIELD_GOAL_MADE', 'FREE_THROW', 'REBOUND')
     ORDER BY pr.game_id ASC, pr.player1_id ASC
