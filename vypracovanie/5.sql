@@ -5,7 +5,6 @@ WITH team_data AS(
         (CONCAT(th.year_founded, '-07-01')::DATE) AS year_founded,
         (CONCAT(th.year_active_till, '-06-30')::DATE) AS year_active_till
     FROM team_history AS th
-    ORDER BY team_id, year_founded, year_active_till
 ),
 team_matches AS (
     SELECT
