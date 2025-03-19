@@ -1,4 +1,4 @@
-WITH selected_records AS (
+WITH selected_records AS (-- vyber zaznamov, ktorych typ sezony spada pod 'Regular Season'
     SELECT
         pr.player1_id,
         pr.event_msg_type,
@@ -13,13 +13,13 @@ WITH selected_records AS (
     ) AS g
     JOIN play_records AS pr ON pr.game_id = g.game_id
 ),
-player_data AS (
+player_data AS (-- vyber dat pre daneho hraca
     SELECT 
         pl.player_id,
         pr.event_msg_type,
         pr.game_id,
         pr.season_id
-    FROM (
+    FROM (-- vyber konkretneho hraca podla mena a priezviska
         SELECT
             pl.id AS player_id,
             pl.first_name,
@@ -29,7 +29,7 @@ player_data AS (
     ) pl
     JOIN selected_records AS pr ON pl.player_id = pr.player1_id
 ),
-stats AS (
+stats AS (-- vypocet presnosti striel hraca
     SELECT
     ge.season_id,
     ge.game_id,
@@ -41,12 +41,12 @@ stats AS (
         )
         / COUNT(ge.event_msg_type)
     ) AS accuracy
-    FROM (
+    FROM (-- vyber dat pre sezony, v ktorych hrac odohral aspon 50 zapasov
         SELECT
             pd.season_id,
             pd.game_id,
             pd.event_msg_type
-        FROM (
+        FROM (-- vyber len tych sezon, kde hrac odohral aspon 50 zapasov
             SELECT 
                 pd.season_id
                 FROM player_data AS pd
@@ -58,18 +58,18 @@ stats AS (
     WHERE ge.event_msg_type IN ('FIELD_GOAL_MADE', 'FIELD_GOAL_MISSED')
     GROUP BY ge.game_id, ge.season_id
 ),
-stability AS (
+stability AS (-- vypocet stability hraca pre kazdu sezonu
     SELECT
         season_id,
         ROUND(AVG(diff), 2) AS stability
-    FROM (
+    FROM (-- vypocet rozdielu presnosti striel medzi dvomi po sebe iducimi zapasmi
         SELECT
             season_id,
             game_id,
             (
                 ABS(accuracy - previous_game_accuracy)
             ) AS diff
-        FROM (
+        FROM (-- nacitanie presnosti striel z predchadzajuceho zapasu pre kazdu hru
             SELECT
                 stats.season_id,
                 stats.game_id,
@@ -85,7 +85,7 @@ stability AS (
     ) AS differences
     GROUP BY season_id
 )
-SELECT
+SELECT -- vypis stability hraca pre kazdu sezonu
     st.season_id,
     st.stability
 FROM stability AS st

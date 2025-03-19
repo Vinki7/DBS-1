@@ -1,4 +1,4 @@
-WITH team_data AS(
+WITH team_data AS(-- ziskanie dat o jednotlivych timoch a zaroven uprava formatu datumov v jednom kroku
     SELECT
         th.team_id,
         CONCAT(th.city, ' ', th.nickname) AS team_name,
@@ -6,7 +6,7 @@ WITH team_data AS(
         (CONCAT(th.year_active_till, '-06-30')::DATE) AS year_active_till
     FROM team_history AS th
 ),
-team_matches AS (
+team_matches AS (-- spocitanie vsetkych zapasov pre kazdy tim
     SELECT
         td.team_id,
         td.team_name,
@@ -42,14 +42,14 @@ SELECT
     team_id,
     team_name,
     number_away_matches,
-    ROUND(
+    ROUND(-- vypocet percentualneho zastupenia zapasov vonku
         CASE
             WHEN total_games = 0 THEN 0
             ELSE (number_away_matches::NUMERIC / total_games) * 100
         END, 2
     ) AS percentage_away_matches,
     number_home_matches,
-    ROUND(
+    ROUND(-- vypocet percentualneho zastupenia zapasov doma
         CASE
             WHEN total_games = 0 THEN 0
             ELSE (number_home_matches::NUMERIC / total_games) * 100
