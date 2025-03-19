@@ -25,7 +25,7 @@ player_data AS (
             pl.first_name,
             pl.last_name
         FROM players AS pl
-        WHERE pl.first_name ILIKE '{{first_name}}' AND pl.last_name ILIKE '{{last_name}}'--'Jaylen', 'Brown' | 'Lebron', 'James'
+        WHERE pl.first_name ILIKE 'Lebron' AND pl.last_name ILIKE 'james'--'Jaylen', 'Brown' | 'Lebron', 'James' | '{{first_name}}' AND pl.last_name ILIKE '{{last_name}}'
     ) pl
     JOIN selected_records AS pr ON pl.player_id = pr.player1_id
 ),
@@ -33,15 +33,14 @@ stats AS (
     SELECT
     ge.season_id,
     ge.game_id,
-    ROUND(
-        100.00 * COUNT(
+    (100.00 * COUNT(
             CASE
                 WHEN ge.event_msg_type = 'FIELD_GOAL_MADE'
                     THEN 1
             END
         )
         / COUNT(ge.event_msg_type)
-    ,2) AS accuracy
+    ) AS accuracy
     FROM (
         SELECT
             pd.season_id,
@@ -87,6 +86,7 @@ stability AS (
     GROUP BY season_id
 )
 SELECT
-    *
-FROM stability
+    st.season_id,
+    st.stability
+FROM stability AS st
 ORDER BY stability ASC, season_id ASC;
