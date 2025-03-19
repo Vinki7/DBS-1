@@ -1,4 +1,4 @@
-WITH selected_records as (
+WITH selected_records as (-- selekcia potrebnych dat
     SELECT
         pl.id AS player_id,
         pr.player1_id,
@@ -16,7 +16,7 @@ WITH selected_records as (
         pr.event_msg_type IN ('FIELD_GOAL_MADE', 'FREE_THROW', 'REBOUND')
     ORDER BY pr.game_id ASC, pr.player1_id ASC
 ),
-game_statistics AS (
+game_statistics AS (-- vypocet statistik pre kazdy zapas
     SELECT
         sr.player_id AS player_id,
         sr.game_id AS game_id,
@@ -49,7 +49,7 @@ game_statistics AS (
     FROM selected_records AS sr
     GROUP BY sr.game_id, sr.player_id
 ),
-is_td AS (
+is_td AS (-- zistenie ci hrac dosiahol triple double
     SELECT
         game_id,
         player_id,
@@ -66,9 +66,9 @@ streak_groups AS (
         st.game_id,
         st.is_triple_double,
         st.streak_start,
-        SUM(st.streak_start) OVER (PARTITION BY st.player_id ORDER BY st.game_id) AS streak_group
+        SUM(st.streak_start) OVER (PARTITION BY st.player_id ORDER BY st.game_id) AS streak_group -- za kazdy streak start sa prirata 1 => viem trackovat dlzku jendotlivych streakov
     FROM (
-        SELECT 
+        SELECT -- zaznamenavanie zaciatku streak-u
             pl.player_id,
             td.game_id,
             td.is_triple_double,
@@ -80,7 +80,7 @@ streak_groups AS (
             END AS streak_start
 
         FROM (
-            SELECT DISTINCT player_id
+            SELECT DISTINCT player_id -- vyber vsetkych hracov, ktori dosiahli triple double
             FROM is_td
             GROUP BY game_id, player_id
             HAVING SUM(is_triple_double) > 0
@@ -91,11 +91,10 @@ streak_groups AS (
 )
 SELECT
     player_id,
-    MAX(longest_streak) AS longest_streak
+    MAX(longest_streak) AS longest_streak -- vyber najvacsieho streaku pre kazdeho hraca
 FROM (
-    SELECT
+    SELECT -- zoskupenie streakov podla streak_group a zistenie dlzky streaku vdaka count(*)
         sg.player_id,
-        sg.streak_group,
         COUNT(*) AS longest_streak
     FROM streak_groups AS sg
     WHERE sg.is_triple_double = 1
