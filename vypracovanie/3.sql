@@ -1,4 +1,4 @@
-WITH event_data AS (
+WITH event_data AS (-- selekcia potrebnych dat a konverzia score_margin v jednom kroku
     SELECT
         pr.player1_id AS player_id,
         pl.first_name AS first_name,
@@ -16,10 +16,9 @@ WITH event_data AS (
     FROM play_records AS pr
     JOIN players AS pl ON pl.id = pr.player1_id
     WHERE pr.game_id = {{game_id}}--21701185, 21701180
-    -- AND pr.event_msg_type IN ('FIELD_GOAL_MADE', 'FREE_THROW', 'FIELD_GOAL_MISSED', 'INSTANT_REPLAY')
     ORDER BY pr.event_number ASC
 ),
-game_players AS (
+game_players AS (-- vyber vsetkych hracov, ktori sa zucastnili daneho zapasu
     SELECT DISTINCT
         ed.player_id AS player_id,
         ed.first_name AS first_name,
@@ -29,7 +28,7 @@ game_players AS (
     FROM event_data AS ed
     ORDER BY ed.team_id
 ),
-successfull_shots AS (
+successfull_shots AS (-- vypocet poctu bodov ziskanych v jednotlivych eventoch
     SELECT
         ed.player_id AS player_id,
         ed.first_name AS first_name,
@@ -52,7 +51,7 @@ successfull_shots AS (
     FROM event_data AS ed
     WHERE ed.score IS NOT NULL
 ),
-shots_missed AS (
+shots_missed AS (-- vypocet poctu neuspesnych pokusov
     SELECT
         ed.player_id AS player_id,
         ed.team_id AS team_id,
@@ -73,7 +72,7 @@ shots_missed AS (
     FROM event_data AS ed
     GROUP BY ed.player_id, ed.team_id
 ),
-point_statistics AS (
+point_statistics AS (-- finalizacia statistik bodov
     SELECT
         gp.player_id AS player_id,
         gp.team_id AS team_id,
@@ -114,8 +113,8 @@ SELECT
     raw_data.shooting_percentage AS shooting_percentage,
     raw_data.free_throws_made AS "FTM",
     raw_data.missed_free_throws AS missed_free_throws,
-    raw_data.ft_percentage AS ft_percentage
-FROM (
+    raw_data.ft_percentage AS "FT_percentage"
+FROM (-- vypocet finalnych statistik hracov
     SELECT 
         gp.player_id AS player_id,
         gp.first_name AS first_name,
