@@ -20,7 +20,7 @@ WITH selected_records AS (-- selekcia vsetkych potrebnych dat => redukovanie dal
         END
     )
     JOIN games ON pr.game_id = games.id
-    WHERE games.season_id::NUMERIC = {{season_id}}::NUMERIC--22017,22016,22015,22010
+    WHERE games.season_id::INTEGER = {{season_id}}::INTEGER--22017,22016,22015,22010
         AND pr.event_msg_type IN (
             'FREE_THROW',
             'FIELD_GOAL_MADE',
