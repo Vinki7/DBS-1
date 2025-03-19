@@ -1,4 +1,4 @@
-WITH selected_records AS (
+WITH selected_records AS (-- selekcia vsetkych potrebnych dat => redukovanie dalsich dopytov a prace s velkym datasetom
     SELECT
         pl.id AS player_id,
         pl.first_name AS first_name,
@@ -28,7 +28,7 @@ WITH selected_records AS (
             'REBOUND'
         )
 ),
-all_changes AS (
+all_changes AS (-- pocet timov za ktore hrac nastupil
     SELECT 
         sr.player_id AS player_id,
         sr.first_name AS first_name,
@@ -49,7 +49,7 @@ top5_changes AS (
     ORDER BY teams_attended DESC, ch.is_active DESC, ch.last_name ASC, ch.first_name ASC
     LIMIT 5
 ),
-activity_per_game AS (
+activity_per_game AS (-- vypocet statistik hraca za jednotlive zapasy
     SELECT
         sr.player_id AS player_id,
         sr.first_name AS first_name,
@@ -85,7 +85,7 @@ SELECT
     act.team_name AS team_name,
     ROUND(AVG(act.total_points)::NUMERIC, 2) AS "PPG",
     ROUND(AVG(act.total_assists)::NUMERIC, 2) AS "APG",
-    COUNT(DISTINCT act.game_id) AS games
+    COUNT(*) AS games
 FROM activity_per_game AS act
 GROUP BY act.player_id, act.first_name, act.last_name, act.team_id, act.team_name
 ORDER BY player_id ASC, team_id ASC;
