@@ -20,7 +20,7 @@ WITH selected_records AS (-- selekcia vsetkych potrebnych dat => redukovanie dal
         END
     )
     JOIN games ON pr.game_id = games.id
-    WHERE games.season_id::INTEGER = {{season_id}}::INTEGER--22017,22016,22015,22010
+    WHERE games.season_id = {{season_id}}::TEXT--22017,22016,22015,22010
         AND pr.event_msg_type IN (
             'FREE_THROW',
             'FIELD_GOAL_MADE',
@@ -82,7 +82,7 @@ SELECT
     act.first_name AS first_name,
     act.last_name AS last_name,
     act.team_id AS team_id,
-    act.team_name AS team_name,
+    act.team_name AS "full_name",
     ROUND(AVG(act.total_points)::NUMERIC, 2) AS "PPG",
     ROUND(AVG(act.total_assists)::NUMERIC, 2) AS "APG",
     COUNT(*) AS games

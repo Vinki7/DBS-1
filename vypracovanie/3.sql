@@ -15,7 +15,7 @@ WITH event_data AS (-- selekcia potrebnych dat a konverzia score_margin v jednom
         END AS score_margin
     FROM play_records AS pr
     JOIN players AS pl ON pl.id = pr.player1_id
-    WHERE pr.game_id = {{game_id}}::INTEGER--21701185, 21701180
+    WHERE pr.game_id = {{game_id}}::BIGINT--21701185, 21701180
     ORDER BY pr.event_number ASC
 ),
 game_players AS (-- vyber vsetkych hracov, ktori sa zucastnili daneho zapasu

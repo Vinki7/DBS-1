@@ -25,7 +25,7 @@ player_data AS (-- vyber dat pre daneho hraca
             pl.first_name,
             pl.last_name
         FROM players AS pl
-        WHERE pl.first_name ILIKE 'Lebron' AND pl.last_name ILIKE 'james'--'Jaylen', 'Brown' | 'Lebron', 'James' | '{{first_name}}' AND pl.last_name ILIKE '{{last_name}}'
+        WHERE pl.first_name ILIKE '{{first_name}}' AND pl.last_name ILIKE '{{last_name}}'--'Jaylen', 'Brown' | 'Lebron', 'James'
     ) pl
     JOIN selected_records AS pr ON pl.player_id = pr.player1_id
 ),

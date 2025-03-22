@@ -8,7 +8,7 @@ WITH selection AS (-- selekcia vsetkych potrebnych udajov
         LAG(pr.event_msg_type, 1) OVER (ORDER BY pr.event_number) AS prev_event,-- vyber predchadzajuceho eventu
         LAG(pr.player1_id, 1) OVER (ORDER BY pr.event_number) AS prev_player -- vyber id hraca z predchadzajuceho eventu
     FROM play_records AS pr
-    WHERE pr.game_id = {{game_id}}::INTEGER--22000516, 22000529
+    WHERE pr.game_id = {{game_id}}::BIGINT--22000516, 22000529
 )
 SELECT 
     sel.player_id, 
